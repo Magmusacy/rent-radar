@@ -47,17 +47,17 @@ EXTRACT_SYSTEM_PROMPT = (
 
 EXTRACT_USER_TEMPLATE = """JSON schema (all fields required; use null or an empty list when something cannot be determined):
 {{
-  "street": "string or null — full address '<street> <number>, {city}' if a number is given, otherwise '<street>, {city}'. If no street is given at all, use district + '{city}'",
-  "district": "string or null — neighborhood/district name",
-  "total_price": "number or null — TOTAL monthly cost in {currency}: rent + admin/maintenance fee + ALL utilities (electricity, water, gas, internet, heating, waste). If the listing states them separately, SUM them. If utilities are estimated ('approx. 300'), include that amount. Never report rent alone when utilities are known.",
-  "area_m2": "number or null — area of the offered room/flat in m², number only",
-  "shared_rooms": "integer or null — how many rooms in the WHOLE flat are shared (i.e. number of flatmates + 1). Studio = 1 (you live alone). A room in a 2-room flat = 2. A room in a 3-room flat = 3. A whole 2-room flat rented entirely = 1 (no flatmates). Only whether there are flatmates matters.",
-  "type": "string — one of: studio, shared_room, flat_2room, flat_3room, flat_4room_plus",
-  "condition_1_10": "integer 1-10 — condition/standard rating (1=needs renovation, 5=ordinary, 8=freshly renovated, 10=premium apartment). If unknown, use 5",
+  "street": "string or null: full address '<street> <number>, {city}' if a number is given, otherwise '<street>, {city}'. If no street is given at all, use district + '{city}'",
+  "district": "string or null: neighborhood/district name",
+  "total_price": "number or null: TOTAL monthly cost in {currency}: rent + admin/maintenance fee + ALL utilities (electricity, water, gas, internet, heating, waste). If the listing states them separately, SUM them. If utilities are estimated ('approx. 300'), include that amount. Never report rent alone when utilities are known.",
+  "area_m2": "number or null: area of the offered room/flat in m², number only",
+  "shared_rooms": "integer or null: how many rooms in the WHOLE flat are shared (i.e. number of flatmates + 1). Studio = 1 (you live alone). A room in a 2-room flat = 2. A room in a 3-room flat = 3. A whole 2-room flat rented entirely = 1 (no flatmates). Only whether there are flatmates matters.",
+  "type": "string: one of: studio, shared_room, flat_2room, flat_3room, flat_4room_plus",
+  "condition_1_10": "integer 1-10: condition/standard rating (1=needs renovation, 5=ordinary, 8=freshly renovated, 10=premium apartment). If unknown, use 5",
   "amenities": ["list from the text: washer, dishwasher, balcony, air conditioning, garage, internet, furniture, appliances"],
   "red_flags": ["list of suspicious items or empty: e.g. 'no interior photos', 'coal heating', 'suspiciously low price', 'tenants restrictions', 'deposit > 2x rent'"],
-  "price_note": "string — one sentence: is the price per m² fair for the local {city} rental market",
-  "summary": "string — ONE sentence verdict with the overall take: is the listing worth a look and why (consider price, condition, location, any catches). Start with 'Worth it' / 'Probably worth' / 'Average' / 'Probably skip' / 'Skip'."
+  "price_note": "string: one sentence: is the price per m² fair for the local {city} rental market",
+  "summary": "string: ONE sentence verdict with the overall take: is the listing worth a look and why (consider price, condition, location, any catches). Start with 'Worth it' / 'Probably worth' / 'Average' / 'Probably skip' / 'Skip'."
 }}
 
 LISTING TEXT:

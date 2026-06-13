@@ -1,6 +1,6 @@
 # Rent Radar
 
-> Score any address by its public-transit commute, and let an LLM triage rental listings for you — in any city.
+> Score any address by its public-transit commute, and let an LLM triage rental listings for you, in any city.
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -8,17 +8,15 @@
 
 Two small, configurable CLI tools for apartment hunting in **any city**:
 
-1. **`commute.py`** — for a given address, shows how long it takes to reach
+1. **`commute.py`**: for a given address, shows how long it takes to reach
    each of your destinations by public transit at a target time, with exact
-   line numbers, vehicle types and transfer counts, then prints a 0–10 score.
-2. **`analyze_listings.py`** — takes a list of listing URLs, scrapes each page,
+   line numbers, vehicle types and transfer counts, then prints a 0-10 score.
+2. **`analyze_listings.py`**: takes a list of listing URLs, scrapes each page,
    uses an LLM to extract structured data (price, area, rooms, condition,
    amenities, red flags), adds commute times, and writes everything to a CSV.
 
-Nothing is hardcoded to one city or one listing site — all locale settings
-(city, transit modes, destinations, currency, score weights) live in a single
-`config.json`. Google Maps provides transit schedules worldwide, so it works
-wherever you live.
+Everything configurable lives in one `config.json`, and Google Maps covers
+public transit worldwide.
 
 ## Contents
 
@@ -30,10 +28,10 @@ wherever you live.
     - [Using a different LLM](#using-a-different-llm)
   - [API keys](#api-keys)
   - [Usage](#usage)
-    - [`commute.py` — score one address](#commutepy--score-one-address)
-    - [`commute.py` — compare and rank several addresses](#commutepy--compare-and-rank-several-addresses)
+    - [`commute.py`: score one address](#commutepy-score-one-address)
+    - [`commute.py`: compare and rank several addresses](#commutepy-compare-and-rank-several-addresses)
       - [Example output](#example-output)
-    - [`analyze_listings.py` — batch-analyze listing URLs](#analyze_listingspy--batch-analyze-listing-urls)
+    - [`analyze_listings.py`: batch-analyze listing URLs](#analyze_listingspy-batch-analyze-listing-urls)
   - [Project layout](#project-layout)
   - [How it works](#how-it-works)
   - [Requirements](#requirements)
@@ -62,8 +60,7 @@ python commute.py "14 Some Street"
 ## Configuration
 
 Everything user-tunable lives in **`config.json`** (copy it from
-`config.example.json`). It is git-ignored, so your personal addresses never
-get committed.
+`config.example.json`).
 
 ```jsonc
 {
@@ -124,7 +121,7 @@ Put keys in **`.env`** (copied from `.env.example`):
 
 | Key | Used by | Where |
 |-----|---------|-------|
-| `GOOGLE_MAPS_API_KEY` | both tools | <https://console.cloud.google.com/> — enable **Directions API** + **Geocoding API** |
+| `GOOGLE_MAPS_API_KEY` | both tools | <https://console.cloud.google.com/>, enable **Directions API** + **Geocoding API** |
 | `DEEPSEEK_API_KEY` (or your chosen name) | `analyze_listings.py` | <https://platform.deepseek.com/> |
 
 Google gives $200 of free credit per month; Directions API costs $0.005 per
@@ -134,14 +131,14 @@ request, so a typical search costs nothing.
 
 ## Usage
 
-### `commute.py` — score one address
+### `commute.py`: score one address
 
 ```bash
 python commute.py "14 Some Street"
 python commute.py                 # prompts for an address
 ```
 
-### `commute.py` — compare and rank several addresses
+### `commute.py`: compare and rank several addresses
 
 ```bash
 python commute.py --compare
@@ -180,10 +177,10 @@ breakdown plus a final ranking.
   Direct routes:         2/3
   Total transfers:       1
 
-  🏆 SCORE: 4.4/10  —  average location
+  🏆 SCORE: 4.4/10  -  average location
 ```
 
-### `analyze_listings.py` — batch-analyze listing URLs
+### `analyze_listings.py`: batch-analyze listing URLs
 
 ```bash
 cp listings.example.txt listings.txt   # then paste your own URLs
@@ -232,4 +229,4 @@ requirements.txt
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

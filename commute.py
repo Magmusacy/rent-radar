@@ -232,7 +232,7 @@ def print_summary(routes: Dict[str, Optional[Route]]) -> float:
     print(f"  Average time:          {avg:.1f} min")
     print(f"  Direct routes:         {direct}/{len(valid)}")
     print(f"  Total transfers:       {transfers}")
-    print(f"\n  🏆 SCORE: {score:.1f}/10  —  {score_label(score)}")
+    print(f"\n  🏆 SCORE: {score:.1f}/10  -  {score_label(score)}")
     return score
 
 
@@ -298,7 +298,7 @@ def main():
         print(" ADDRESS RANKING")
         print("█" * 64)
         for i, (addr, score) in enumerate(sorted(results, key=lambda x: -x[1]), 1):
-            print(f" {i}. {score:.1f}/10  —  {addr}")
+            print(f" {i}. {score:.1f}/10  -  {addr}")
         return
 
     if len(sys.argv) > 1:
