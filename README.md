@@ -1,4 +1,10 @@
-# Home Commute & Listing Analyzer
+# Rent Radar
+
+> Score any address by its public-transit commute, and let an LLM triage rental listings for you — in any city.
+
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Code style: PEP 8](https://img.shields.io/badge/code%20style-pep8-orange.svg)](https://peps.python.org/pep-0008/)
 
 Two small, configurable CLI tools for apartment hunting in **any city**:
 
@@ -13,6 +19,25 @@ Nothing is hardcoded to one city or one listing site — all locale settings
 (city, transit modes, destinations, currency, score weights) live in a single
 `config.json`. Google Maps provides transit schedules worldwide, so it works
 wherever you live.
+
+## Contents
+
+- [Rent Radar](#rent-radar)
+  - [Contents](#contents)
+  - [Quick start](#quick-start)
+  - [Configuration](#configuration)
+    - [Using a different city](#using-a-different-city)
+    - [Using a different LLM](#using-a-different-llm)
+  - [API keys](#api-keys)
+  - [Usage](#usage)
+    - [`commute.py` — score one address](#commutepy--score-one-address)
+    - [`commute.py` — compare and rank several addresses](#commutepy--compare-and-rank-several-addresses)
+      - [Example output](#example-output)
+    - [`analyze_listings.py` — batch-analyze listing URLs](#analyze_listingspy--batch-analyze-listing-urls)
+  - [Project layout](#project-layout)
+  - [How it works](#how-it-works)
+  - [Requirements](#requirements)
+  - [License](#license)
 
 ---
 
@@ -126,6 +151,7 @@ Enter addresses line by line; an empty line ends input. You get a per-address
 breakdown plus a final ranking.
 
 #### Example output
+
 
 ```
 ================================================================
