@@ -1,0 +1,4 @@
+# One listing URL per line. Lines that don't start with http are ignored.
+# Copy this file to listings.txt and paste your own links.
+https://www.example-listings.com/rental/studio-downtown-123
+https://www.example-listings.com/rental/2-room-flat-by-the-park-456

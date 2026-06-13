@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets and personal config
+.env
+config.json
+
+# User data and generated output
+listings.txt
+*.csv
+!*.example.csv
+
+# Legacy / personal Polish files (pre-rename)
+oferty.txt
+oferty.csv
+mieszkanie.py
+analiza_ofert.py
+
+# Editor
+.vscode/
+.idea/
+.DS_Store

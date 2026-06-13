@@ -1,0 +1,37 @@
+{
+  "city": "Kraków",
+  "region": "pl",
+  "language": "en",
+
+  "destinations": {
+    "Work": "Main Square, Kraków",
+    "University": "AGH University, Kraków",
+    "Gym": "Some Gym, Kraków"
+  },
+
+  "transit_modes": ["bus", "tram", "subway", "rail"],
+
+  "schedule": {
+    "hour": 9,
+    "minute": 0,
+    "mode": "arrival"
+  },
+
+  "scoring": {
+    "minutes_divisor": 5.0,
+    "transfer_penalty": 0.4,
+    "max_commute_min": 40,
+    "max_walk_min": 20,
+    "min_condition": 4
+  },
+
+  "listings": {
+    "currency": "PLN",
+    "llm_provider": "deepseek",
+    "llm_model": "deepseek-chat",
+    "llm_base_url": "https://api.deepseek.com",
+    "llm_api_key_env": "DEEPSEEK_API_KEY",
+    "request_delay_sec": 1.5,
+    "extraction_language": "English"
+  }
+}
