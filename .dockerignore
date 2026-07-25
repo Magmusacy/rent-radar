@@ -1,0 +1,17 @@
+.venv/
+.git/
+.github/
+__pycache__/
+*.pyc
+.env
+data/
+.refresh/
+offers.db
+*.csv
+!*.example.csv
+dashboard*.html
+docs/
+listings.txt
+fb_items.json
+com.rentradar.refresh.plist
+.DS_Store

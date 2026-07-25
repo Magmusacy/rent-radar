@@ -201,8 +201,18 @@ reasons to skip, and a one-line `summary` verdict.
 ```
 config.py             # loads config.json into typed dataclasses
 config.example.json   # config template (copy to config.json)
-commute.py            # transit commute calculator + score
+commute.py            # transit/bike/walking routes + score
 analyze_listings.py   # scrape + LLM extraction + commute -> CSV
+geo.py                # free geocoding (OpenStreetMap) + straight-line distance
+collect_portals.py    # gathers listing URLs from OLX and Otodom search pages
+score_offers.py       # URLs *or* raw text -> LLM + distance -> CSV
+store.py              # SQLite store, keyed by URL, remembers when each offer was first seen
+refresh.py            # one sweep: collect -> score what's new -> store -> rebuild outputs
+make_dashboard.py     # CSV -> self-contained interactive HTML dashboard
+bot.py                # Telegram bot: hourly schedule + /skan /nowe /top /stan
+Dockerfile            # server image (no Google key needed)
+compose.yml           # container definition, /data volume
+deploy.sh             # one-command deploy to a Docker host over SSH
 .env.example          # API key template (copy to .env)
 listings.example.txt  # URL list template (copy to listings.txt)
 requirements.txt
@@ -221,11 +231,72 @@ requirements.txt
 
 ---
 
+## Running it as a server (Docker + Telegram)
+
+The laptop and the server run the same code with different jobs:
+
+| | Laptop | Server |
+|---|---|---|
+| Schedule | launchd, three times a day | in-process, hourly 11:00–21:00 |
+| Sources | portals **+ Facebook** (needs a logged-in browser) | portals only |
+| Distance | Google Maps: transit, bike, walking — exact minutes | OpenStreetMap + haversine: **straight-line km** |
+| Alerts | macOS notification | Telegram message |
+| Database | `offers.db` next to the code | `/data/offers.db` on a volume |
+
+The server deliberately gets **no Google Maps key**. Directions costs three calls
+per offer, and for a first-pass filter "how far, roughly" is enough — so `geo.py`
+geocodes through Nominatim (free, no key) and computes the great-circle distance.
+Exact minutes stay on the laptop, for the handful of offers that pass the filter.
+
+### Deploy
+
+```bash
+cp .env.example .env      # fill in BOT_TOKEN, OWNER_ID, DEEPSEEK_API_KEY
+./deploy.sh root@YOUR_DROPLET_IP
+```
+
+`deploy.sh` is idempotent — run it as often as you like. It runs the test suite
+first and refuses to deploy if anything fails, installs Docker if the host lacks
+it, copies the code (never `.env`, never the database), strips the Google key on
+the way, then `docker compose up -d --build` and verifies the container is
+running.
+
+```bash
+ssh root@YOUR_DROPLET_IP 'docker logs -f rent-radar'      # follow the logs
+ssh root@YOUR_DROPLET_IP 'cd /opt/rent-radar && docker compose restart'
+```
+
+### Telegram
+
+Get a token from [@BotFather](https://t.me/BotFather) and your numeric user id
+from [@userinfobot](https://t.me/userinfobot), then put both in `.env`:
+
+```ini
+BOT_TOKEN=123456:AA...
+OWNER_ID=123456789        # only this user may issue commands
+ALERT_BELOW=2200          # total monthly price, PLN
+MAX_KM=5                  # straight-line distance from the commute target
+```
+
+The bot writes only when a sweep found something new, plus a digest after the
+last sweep of the day. Commands: `/skan` (sweep now), `/nowe` (found today),
+`/top` (cheapest matches), `/stan` (database and schedule).
+
+### Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q tests
+```
+
+---
+
 ## Requirements
 
 - Python 3.10+
 - See `requirements.txt` (`googlemaps`, `python-dotenv`, `requests`,
-  `beautifulsoup4`, `openai`)
+  `beautifulsoup4`, `openai`, `python-telegram-bot`)
+- Docker only for the server deployment
 
 ## License
 
