@@ -6,6 +6,7 @@ import os
 import re
 import sys
 import time
+from datetime import date
 from typing import Any, Dict, Optional
 
 import requests
@@ -41,6 +42,9 @@ HTTP_HEADERS = {
 EXTRACT_SYSTEM_PROMPT = (
     "You are an expert in residential rental listings in {city}. "
     "From the listing text, extract precise, structured data. "
+    "Today's date is {today}. Judge move-in and availability dates against that "
+    "date — a date in the current year is not 'far in the future', and a date "
+    "before it means the listing is stale. Never assume the year from memory. "
     "Respond ONLY with valid JSON matching the schema, with no extra text and "
     "no markdown fences. Write all free-text fields in {language}."
 )
@@ -88,6 +92,7 @@ def extract_offer_data(client: OpenAI, text: str) -> Optional[Dict[str, Any]]:
     system_prompt = EXTRACT_SYSTEM_PROMPT.format(
         city=CONFIG.city or "the city",
         language=lc.extraction_language,
+        today=date.today().isoformat(),
     )
     user_prompt = EXTRACT_USER_TEMPLATE.format(
         city=CONFIG.city or "the city",
@@ -103,7 +108,7 @@ def extract_offer_data(client: OpenAI, text: str) -> Optional[Dict[str, Any]]:
             ],
             response_format={"type": "json_object"},
             temperature=0.2,
-            max_tokens=800,
+            max_tokens=3000,
         )
         return json.loads(resp.choices[0].message.content)
     except json.JSONDecodeError as e:
