@@ -1,5 +1,5 @@
-# Rent Radar — bot Telegram skanujący portale z ogłoszeniami.
-# Bez Google Maps: odległości liczone z OpenStreetMap + haversine (patrz geo.py).
+# Rent Radar — the Telegram bot that sweeps rental portals.
+# No Google Maps here: distances come from OpenStreetMap + haversine (see geo.py).
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -13,13 +13,13 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# Zależności osobno, żeby zmiana kodu nie unieważniała warstwy z pipem.
+# Dependencies first, so editing code does not invalidate the pip layer.
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY *.py ./
 
-# Kontener nie potrzebuje roota; /data to wolumen z bazą i wynikami.
+# Nothing here needs root; /data is the volume holding the database and outputs.
 RUN useradd --create-home --uid 10001 radar \
     && mkdir -p /data \
     && chown -R radar:radar /app /data

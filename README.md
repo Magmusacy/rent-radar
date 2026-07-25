@@ -34,6 +34,10 @@ public transit worldwide.
     - [`analyze_listings.py`: batch-analyze listing URLs](#analyze_listingspy-batch-analyze-listing-urls)
   - [Project layout](#project-layout)
   - [How it works](#how-it-works)
+  - [Running it as a server (Docker + Telegram)](#running-it-as-a-server-docker--telegram)
+    - [Deploy](#deploy)
+    - [Telegram](#telegram)
+    - [Tests](#tests)
   - [Requirements](#requirements)
   - [License](#license)
 
@@ -250,33 +254,40 @@ Exact minutes stay on the laptop, for the handful of offers that pass the filter
 
 ### Deploy
 
-```bash
-cp .env.example .env      # fill in BOT_TOKEN, OWNER_ID, DEEPSEEK_API_KEY
-./deploy.sh root@YOUR_DROPLET_IP
-```
-
-`deploy.sh` is idempotent — run it as often as you like. It runs the test suite
-first and refuses to deploy if anything fails, installs Docker if the host lacks
-it, copies the code (never `.env`, never the database), strips the Google key on
-the way, then `docker compose up -d --build` and verifies the container is
-running.
-
-```bash
-ssh root@YOUR_DROPLET_IP 'docker logs -f rent-radar'      # follow the logs
-ssh root@YOUR_DROPLET_IP 'cd /opt/rent-radar && docker compose restart'
-```
-
-### Telegram
-
-Get a token from [@BotFather](https://t.me/BotFather) and your numeric user id
-from [@userinfobot](https://t.me/userinfobot), then put both in `.env`:
+Add the bot's settings to `.env` — token from [@BotFather](https://t.me/BotFather),
+your numeric id from [@userinfobot](https://t.me/userinfobot):
 
 ```ini
 BOT_TOKEN=123456:AA...
 OWNER_ID=123456789        # only this user may issue commands
-ALERT_BELOW=2200          # total monthly price, PLN
-MAX_KM=5                  # straight-line distance from the commute target
+ALERT_BELOW=2200          # alert threshold: total monthly price, PLN
+MAX_KM=6                  # alert threshold: straight-line km from the target
 ```
+
+Then point the script at any Ubuntu/Debian host you can SSH into:
+
+```bash
+./deploy.sh root@YOUR_DROPLET_IP
+./deploy.sh root@YOUR_DROPLET_IP -i ~/.ssh/my_key    # with a specific key
+```
+
+It runs the tests first and refuses to deploy if they fail, installs Docker if
+the host lacks it, uploads the code to `/opt/rent-radar`, copies `.env` only if
+the server has none (minus `GOOGLE_MAPS_API_KEY`, unused there), and brings the
+container up. Idempotent — run it as often as you like; it never overwrites the
+server's `.env` or its database.
+
+```bash
+ssh root@DROPLET 'docker logs -f rent-radar'                      # follow the logs
+ssh root@DROPLET 'cd /opt/rent-radar && docker compose restart'   # restart
+scp root@DROPLET:/opt/rent-radar/data/offers.db ./backup.db       # back up the database
+```
+
+The database and generated files live in `/opt/rent-radar/data`, mounted as
+`/data`, so rebuilding the image never touches them. Run the bot in one place
+only — two instances polling the same token make Telegram drop both.
+
+### Telegram
 
 The bot writes only when a sweep found something new, plus a digest after the
 last sweep of the day. Commands: `/skan` (sweep now), `/nowe` (found today),

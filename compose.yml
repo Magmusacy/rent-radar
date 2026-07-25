@@ -6,12 +6,12 @@ services:
     restart: unless-stopped
     env_file: .env
     environment:
-      # Serwer liczy kilometry w linii prostej, nie minuty — brak klucza Google
-      # jest tu decyzją, nie brakiem. Patrz geo.py.
+      # The server measures straight-line kilometres, not minutes — the absent
+      # Google key is a decision, not an oversight. See geo.py.
       GOOGLE_MAPS_API_KEY: ""
       DB_PATH: /data/offers.db
     volumes:
-      # Baza i wygenerowane pliki przeżywają przebudowę obrazu.
+      # The database and generated files survive image rebuilds.
       - ./data:/data
     logging:
       driver: json-file
