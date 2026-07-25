@@ -163,6 +163,36 @@ def find_route(gmaps, origin: str, destination: str,
     return parse_route(result[0])
 
 
+def direct_route(gmaps, origin: str, destination: str, mode: str) -> Optional[tuple]:
+    """Door-to-door by a single mode ('walking', 'bicycling', 'driving'): (minutes, km).
+
+    Distinct from Route.walk_min, which is only the walking legs *inside* a
+    transit journey (getting to the stop and away from it).
+    """
+    kwargs = {"origin": origin, "destination": destination,
+              "mode": mode, "language": CONFIG.language}
+    if CONFIG.region:
+        kwargs["region"] = CONFIG.region
+    try:
+        result = gmaps.directions(**kwargs)
+    except Exception as e:
+        print(f"  ! {mode} route error: {e}")
+        return None
+    if not result:
+        return None
+    leg = result[0]["legs"][0]
+    return round(leg["duration"]["value"] / 60), round(leg["distance"]["value"] / 1000, 1)
+
+
+def walking_route(gmaps, origin: str, destination: str) -> Optional[tuple]:
+    return direct_route(gmaps, origin, destination, "walking")
+
+
+def bicycling_route(gmaps, origin: str, destination: str) -> Optional[tuple]:
+    """Krakow is flat and has riverside paths — a bike often halves the transit time."""
+    return direct_route(gmaps, origin, destination, "bicycling")
+
+
 def score_location(routes: Dict[str, Optional[Route]]) -> float:
     valid = [r for r in routes.values() if r is not None]
     if not valid:
