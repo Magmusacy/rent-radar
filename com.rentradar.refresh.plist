@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Sweep at 10:00, 16:00 and 22:00. Install with:
+     cp com.rentradar.refresh.plist ~/Library/LaunchAgents/
+     launchctl load -w ~/Library/LaunchAgents/com.rentradar.refresh.plist
+  Stop with:
+     launchctl unload -w ~/Library/LaunchAgents/com.rentradar.refresh.plist
+  Unlike cron, launchd runs a missed job once the Mac wakes up.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.rentradar.refresh</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/magmusacy/Desktop/magmusacy-rent-radar/.venv/bin/python</string>
+    <string>/Users/magmusacy/Desktop/magmusacy-rent-radar/refresh.py</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/magmusacy/Desktop/magmusacy-rent-radar</string>
+
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Hour</key><integer>10</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>16</integer><key>Minute</key><integer>0</integer></dict>
+    <dict><key>Hour</key><integer>22</integer><key>Minute</key><integer>0</integer></dict>
+  </array>
+
+  <key>StandardOutPath</key>
+  <string>/Users/magmusacy/Desktop/magmusacy-rent-radar/.refresh/refresh.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/magmusacy/Desktop/magmusacy-rent-radar/.refresh/refresh.log</string>
+
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>
