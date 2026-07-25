@@ -18,6 +18,10 @@ config.json
 listings.txt
 *.csv
 !*.example.csv
+dashboard*.html
+.seen_urls.txt
+.refresh/
+fb_items.json
 
 # Legacy / personal Polish files (pre-rename)
 oferty.txt
@@ -29,3 +33,6 @@ analiza_ofert.py
 .vscode/
 .idea/
 .DS_Store
+
+# Offer database (personal data from listings)
+offers.db
