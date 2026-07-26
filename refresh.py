@@ -24,6 +24,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
+try:
+    # launchd and cron start with a bare environment, so the keys have to be read
+    # here too — without this the laptop silently drops to the server's
+    # no-Google-Maps mode and loses its commute times.
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent / ".env")
+except Exception:
+    pass
+
 import collect_portals
 import store
 
