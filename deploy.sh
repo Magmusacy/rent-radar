@@ -2,7 +2,7 @@
 #
 # Deploy Rent Radar to an Ubuntu/Debian host with Docker.
 #
-#   ./deploy.sh root@164.92.161.203
+#   ./deploy.sh root@203.0.113.10
 #   ./deploy.sh root@1.2.3.4 -i ~/.ssh/my_key
 #
 # Idempotent — run it as often as you like. It installs only what is missing and

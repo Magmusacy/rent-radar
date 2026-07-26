@@ -226,9 +226,9 @@ def main():
     ap = argparse.ArgumentParser(description="Score offers from JSON -> CSV")
     ap.add_argument("input", help="JSON file with items")
     ap.add_argument("-o", "--output", default="offers.csv")
-    ap.add_argument("--dest", default=None,
-                    help="Single commute destination, e.g. 'Zabłocie 43B, Kraków'. "
-                         "Defaults to config.json destinations.")
+    ap.add_argument("--dest", default=os.environ.get("DEST_ADDRESS"),
+                    help="Single commute destination, e.g. 'Main Square, Kraków'. "
+                         "Defaults to $DEST_ADDRESS, then config.json destinations.")
     ap.add_argument("--max-min", type=int, default=None,
                     help="Drop offers whose commute exceeds this many minutes")
     ap.add_argument("--workers", type=int, default=6)

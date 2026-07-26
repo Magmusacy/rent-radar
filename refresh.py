@@ -35,13 +35,18 @@ except Exception:
 
 import collect_portals
 import store
+from config import CONFIG
+
+# Falls back to the first destination in config.json (also gitignored).
+CONFIG_DEST = next(iter(CONFIG.destinations.values()), "")
 
 ROOT = Path(__file__).parent
 PY = str(ROOT / ".venv/bin/python") if (ROOT / ".venv/bin/python").exists() else sys.executable
 MASTER = ROOT / "oferty_krakow_wszystkie.csv"
 FILTERED = ROOT / "oferty_krakow_30min.csv"
 FB_ITEMS = ROOT / "fb_items.json"
-DEST = os.environ.get("DEST_ADDRESS", "Zabłocie 43B, Kraków")
+# Your own address does not belong in a public repository — set DEST_ADDRESS in .env.
+DEST = os.environ.get("DEST_ADDRESS") or CONFIG_DEST
 # The alert profile. Overridable from .env so the server and the laptop can differ.
 ALERT_BELOW = float(os.environ.get("ALERT_BELOW", 2200))   # total price, PLN
 MAX_COMMUTE = float(os.environ.get("MAX_COMMUTE", 30))     # minutes, when Maps is available

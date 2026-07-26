@@ -13,10 +13,10 @@ that shows up in ten listings is geocoded once.
 An LLM is deliberately not involved. Without web access it would be recalling
 coordinates from memory, and a confidently wrong distance is worse than none.
 
-Straight-line distance ignores rivers and tram lines: al. Pokoju is 3.0 km from
-Zabłocie as the crow flies but 29 minutes by tram, because the Vistula forces a
-detour to the bridge. Treat km as a coarse sieve; exact minutes come from
-commute.py where they matter.
+Straight-line distance ignores rivers and tram lines: in Krakow an address 3 km
+away as the crow flies can be 29 minutes by tram, because the Vistula forces a
+detour to the nearest bridge. Treat km as a coarse sieve; exact minutes come
+from commute.py where they matter.
 """
 from __future__ import annotations
 
@@ -121,8 +121,9 @@ def distance_km(address: str, destination: str,
 
 
 if __name__ == "__main__":
+    import os
     import sys
 
-    dest = "Zabłocie 43B, Kraków"
+    dest = os.environ.get("DEST_ADDRESS", "Rynek Główny, Kraków")
     for addr in sys.argv[1:] or ["Topolowa 30, Kraków", "Krowoderskich Zuchów, Kraków"]:
         print(f"{addr:<40} {distance_km(addr, dest)} km")

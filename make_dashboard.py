@@ -11,7 +11,16 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 from pathlib import Path
+
+try:
+    # DEST_ADDRESS lives in .env, so a standalone run names the same place a
+    # scheduled one does
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).parent / ".env")
+except Exception:
+    pass
 
 SOURCE_LABELS = {
     "olx": "OLX",
@@ -278,7 +287,7 @@ TEMPLATE = """<!doctype html>
 
   <div class="card">
     <div class="charthead">
-      <h2>Cena a dojazd na Zabłocie 43B</h2>
+      <h2>Cena a dojazd na __DEST__</h2>
       <span class="hint">każdy punkt to oferta · najedź po szczegóły · kliknij, by otworzyć ogłoszenie</span>
     </div>
     <svg id="scatter" viewBox="0 0 900 380" role="img" aria-label="Wykres: cena całkowita względem czasu dojazdu"></svg>
@@ -515,7 +524,7 @@ function kpis(rows) {
     ["Ofert po filtrach", rows.length, ""],
     ["Mediana ceny", zl(median(prices)), ""],
     ["Najtańsza", cheapest ? zl(cheapest.price) : "—", cheapest ? cheapest.district || cheapest.street : ""],
-    ["Mediana dojazdu", mn(median(commutes)), "na Zabłocie 43B"],
+    ["Mediana dojazdu", mn(median(commutes)), "na __DEST__"],
   ];
   document.getElementById("kpis").innerHTML = items.map(([l, v, s]) =>
     `<div class="kpi"><div class="label">${l}</div><div class="value">${v}${s ? ` <small>${s}</small>` : ""}</div></div>`
@@ -681,6 +690,9 @@ def main():
     ap.add_argument("input", nargs="?", default="oferty_krakow_30min.csv")
     ap.add_argument("-o", "--output", default="dashboard.html")
     ap.add_argument("--title", default=None)
+    # The commute target is personal data — it comes from the environment, not
+    # from the source of a public repository.
+    ap.add_argument("--dest", default=os.environ.get("DEST_ADDRESS", "miejsce pracy"))
     args = ap.parse_args()
 
     rows = load(Path(args.input))
@@ -692,7 +704,7 @@ def main():
     lo, hi = (f"{int(p):,}".replace(",", " ") for p in (prices[0], prices[-1]))
     subtitle = (f"{len(rows)} ofert z OLX, Otodom i Facebooka · "
                 f"ceny {lo} – {hi} zł/mies. (wraz z mediami) · "
-                f"czas dojazdu liczony komunikacją miejską na Zabłocie 43B")
+                f"czas dojazdu liczony komunikacją miejską na {args.dest}")
     footer = (f"Wygenerowane z {Path(args.input).name} przez make_dashboard.py · "
               f"koszty i oceny pochodzą z automatycznej analizy treści ogłoszeń — zweryfikuj przed kontaktem.")
 
@@ -708,6 +720,7 @@ def main():
     html = (TEMPLATE
             .replace("__DATA__", json.dumps(rows, ensure_ascii=False))
             .replace("__TITLE__", title)
+            .replace("__DEST__", args.dest)
             .replace("__SUBTITLE__", subtitle)
             .replace("__THIS_LABEL__", this_label)
             .replace("__PEER_FILE__", peer_file)

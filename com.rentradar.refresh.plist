@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  Sweep at 10:00, 16:00 and 22:00. Install with:
+  Sweep at 10:00, 16:00 and 22:00.
+  Replace /PATH/TO/rent-radar with the checkout's absolute path, then install with:
      cp com.rentradar.refresh.plist ~/Library/LaunchAgents/
      launchctl load -w ~/Library/LaunchAgents/com.rentradar.refresh.plist
   Stop with:
@@ -15,12 +16,12 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/magmusacy/Desktop/magmusacy-rent-radar/.venv/bin/python</string>
-    <string>/Users/magmusacy/Desktop/magmusacy-rent-radar/refresh.py</string>
+    <string>/PATH/TO/rent-radar/.venv/bin/python</string>
+    <string>/PATH/TO/rent-radar/refresh.py</string>
   </array>
 
   <key>WorkingDirectory</key>
-  <string>/Users/magmusacy/Desktop/magmusacy-rent-radar</string>
+  <string>/PATH/TO/rent-radar</string>
 
   <key>StartCalendarInterval</key>
   <array>
@@ -30,9 +31,9 @@
   </array>
 
   <key>StandardOutPath</key>
-  <string>/Users/magmusacy/Desktop/magmusacy-rent-radar/.refresh/refresh.log</string>
+  <string>/PATH/TO/rent-radar/.refresh/refresh.log</string>
   <key>StandardErrorPath</key>
-  <string>/Users/magmusacy/Desktop/magmusacy-rent-radar/.refresh/refresh.log</string>
+  <string>/PATH/TO/rent-radar/.refresh/refresh.log</string>
 
   <key>RunAtLoad</key>
   <false/>
