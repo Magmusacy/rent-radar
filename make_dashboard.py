@@ -54,6 +54,9 @@ def load(path: Path):
                 "transfers": num(r.get("transfers")),
                 "condition": num(r.get("condition_1_10")),
                 "type": r.get("type") or "",
+                # how many rooms the whole flat has — the thing you want to know
+                # when the offer is one room inside it
+                "rooms": num(r.get("shared_rooms")),
                 "street": r.get("street") or "",
                 "district": r.get("district") or "",
                 "source": SOURCE_LABELS.get(r.get("source", ""), r.get("source", "")),
@@ -158,6 +161,7 @@ TEMPLATE = """<!doctype html>
   }
   .chip[aria-pressed="true"] { color: var(--text-primary); border-color: var(--text-muted); }
   .chip[aria-pressed="false"] { opacity: 0.45; }
+  .chip:disabled { opacity: 0.25; cursor: default; }
   .chip .dot { width: 9px; height: 9px; border-radius: 50%; }
   .chip .dot.sq { border-radius: 2px; }
   .chip .dot.tri { border-radius: 1px; transform: rotate(45deg) scale(0.86); }
@@ -261,8 +265,8 @@ TEMPLATE = """<!doctype html>
         </select>
       </div>
       <div class="f">
-        <label for="type">Typ</label>
-        <select id="type"><option value="">wszystkie</option></select>
+        <label>Rodzaj</label>
+        <div class="chips" id="typeChips"></div>
       </div>
       <div class="f">
         <label for="q">Szukaj (adres, dzielnica)</label>
@@ -302,7 +306,8 @@ TEMPLATE = """<!doctype html>
       <b>Od kogo</b> — z pola „typ ogłoszeniodawcy" na portalu, a gdy go brak, z treści
       („bez pośredników" → właściciel, „prowizja biura" → agencja). „—" znaczy, że nie dało się
       ustalić; przy agencji licz się z jednorazową, bezzwrotną prowizją.
-      <b>Znalezione</b> — kiedy nasz skaner zobaczył je po raz pierwszy (z bazy `offers.db`);
+      <b>Znalezione</b> — data i godzina, o której nasz skaner zobaczył ofertę po raz pierwszy
+      (z bazy `offers.db`). Skanujemy kilka razy dziennie, więc liczy się godzina, nie sam dzień;
       to jest wiarygodna miara „nowe od ostatniego skanu", bo nie da się jej odświeżyć.
       <b>⚠</b> przy cenie — kwota z ogłoszenia nie zgadza się z wyliczoną, sprawdź kolumnę
       <code>stated_totals</code> w CSV.
@@ -333,7 +338,7 @@ const maxPrice = Math.max(...DATA.map(d => d.price));
 const maxCommute = Math.max(...DATA.map(d => d.commute));
 const state = {
   sources: new Set(SERIES.map(s => s.key)),
-  price: maxPrice, commute: maxCommute, type: "", q: "", age: null, found: null, seller: null,
+  price: maxPrice, commute: maxCommute, types: null, q: "", age: null, found: null, seller: null,
   sort: { col: "price", dir: "asc" },
 };
 
@@ -373,8 +378,15 @@ SELLER_OPTS.forEach(o => {
 });
 
 // single-select segmented control over first_seen (our own discovery date)
+// The most recent sweep, so "what came in just now" is one click away.
+// Declared before the chips that name it — a const used above its declaration
+// throws, and one such error takes the whole dashboard down.
+const LAST_SCAN = DATA.reduce((best, d) => (d.foundAt > best ? d.foundAt : best), "");
+const LAST_SCAN_LABEL = LAST_SCAN ? LAST_SCAN.slice(11, 16) : "";
+
 const FOUND_OPTS = [
   { label: "wszystkie", value: null },
+  { label: `ostatni skan ${LAST_SCAN_LABEL}`, value: "last" },
   { label: "dzisiaj", value: 0 },
   { label: "ostatnie 3 dni", value: 3 },
 ];
@@ -393,11 +405,45 @@ FOUND_OPTS.forEach(o => {
   foundChips.appendChild(b);
 });
 
-const typeSel = document.getElementById("type");
-[...new Set(DATA.map(d => d.type).filter(Boolean))].sort().forEach(t => {
-  const o = document.createElement("option"); o.value = t; o.textContent = t.replace(/_/g, " ");
-  typeSel.appendChild(o);
+// The extractor's vocabulary, grouped into the four things you actually choose
+// between. Counts come from the data, so an empty bucket says so.
+const TYPE_OPTS = [
+  { label: "wszystkie", types: null },
+  { label: "👥 pokój", types: ["shared_room"] },
+  { label: "🏠 kawalerka", types: ["studio", "flat_1room"] },
+  { label: "🛏 2 pokoje", types: ["flat_2room"] },
+  { label: "🛏 3+ pokoje", types: ["flat_3room", "flat_4room_plus"] },
+];
+const typeChips = document.getElementById("typeChips");
+TYPE_OPTS.forEach(o => {
+  const n = o.types ? DATA.filter(d => o.types.includes(d.type)).length : DATA.length;
+  const b = document.createElement("button");
+  b.className = "chip"; b.type = "button";
+  b.setAttribute("aria-pressed", String(o.types === state.types));
+  b.innerHTML = `${o.label} <span class="muted">${n}</span>`;
+  b.disabled = n === 0;
+  b.onclick = () => {
+    state.types = o.types;
+    [...typeChips.children].forEach((c, i) =>
+      c.setAttribute("aria-pressed", String(TYPE_OPTS[i].types === state.types)));
+    render();
+  };
+  typeChips.appendChild(b);
 });
+
+// A room is never just "a room": renting one in a 2-room flat and in a 6-room
+// flat are different lives, so say which whenever the listing revealed it.
+const TYPE_NAMES = {
+  studio: "kawalerka", flat_1room: "1 pokój", flat_2room: "2 pokoje",
+  flat_3room: "3 pokoje", flat_4room_plus: "4+ pokoi",
+};
+const typeLabel = d => {
+  if (d.type === "shared_room") {
+    return d.rooms ? `pokój w ${d.rooms}-pok. <span class="muted">(${d.rooms - 1} współlok.)</span>`
+                   : 'pokój <span class="muted">(? pok.)</span>';
+  }
+  return TYPE_NAMES[d.type] || (d.type || "—").replace(/_/g, " ");
+};
 
 const priceEl = document.getElementById("price");
 const commuteEl = document.getElementById("commute");
@@ -406,7 +452,6 @@ commuteEl.min = 5; commuteEl.max = Math.ceil(maxCommute); commuteEl.step = 1; co
 
 priceEl.oninput = () => { state.price = +priceEl.value; render(); };
 commuteEl.oninput = () => { state.commute = +commuteEl.value; render(); };
-typeSel.onchange = () => { state.type = typeSel.value; render(); };
 document.getElementById("age").onchange = e => { state.age = e.target.value ? +e.target.value : null; render(); };
 document.getElementById("q").oninput = e => { state.q = e.target.value.toLowerCase().trim(); render(); };
 document.getElementById("reset").onclick = () => {
@@ -414,7 +459,9 @@ document.getElementById("reset").onclick = () => {
   [...chipsEl.children].forEach(c => c.setAttribute("aria-pressed", "true"));
   state.price = +priceEl.max; priceEl.value = priceEl.max;
   state.commute = +commuteEl.max; commuteEl.value = commuteEl.max;
-  state.type = ""; typeSel.value = "";
+  state.types = null;
+  [...typeChips.children].forEach((c, i) =>
+    c.setAttribute("aria-pressed", String(TYPE_OPTS[i].types === null)));
   state.q = ""; document.getElementById("q").value = "";
   state.age = null; document.getElementById("age").value = "";
   state.found = null;
@@ -430,11 +477,16 @@ const visible = () => DATA.filter(d =>
   state.sources.has(d.source) &&
   d.price <= state.price &&
   d.commute <= state.commute &&
-  (!state.type || d.type === state.type) &&
+  (state.types === null || state.types.includes(d.type)) &&
   // unknown posting date is kept out when filtering by freshness — an offer we
   // cannot date is not evidence of a fresh one
   (state.age == null || (d.days != null && d.days <= state.age)) &&
-  (state.found == null || (d.found != null && d.found <= state.found)) &&
+  (state.found == null
+    // one sweep writes its rows within a few minutes, so compare on the hour
+    ? true
+    : state.found === "last"
+      ? d.foundAt.slice(0, 13) === LAST_SCAN.slice(0, 13)
+      : d.found != null && d.found <= state.found) &&
   (state.seller == null || d.seller === state.seller) &&
   (!state.q || (d.street + " " + d.district).toLowerCase().includes(state.q))
 );
@@ -443,6 +495,17 @@ const age = d => d.days == null ? "—"
   : d.days <= 0 ? '<span class="fresh">dziś</span>'
   : d.days === 1 ? '<span class="fresh">wczoraj</span>'
   : d.days + " dni";
+
+// With several sweeps a day, "dziś" says nothing — the hour is the useful part.
+const foundLabel = d => {
+  if (d.found == null || !d.foundAt) return "—";
+  const time = d.foundAt.slice(11, 16);
+  if (d.found <= 0) return `<span class="fresh">dziś ${time}</span>`;
+  if (d.found === 1) return `wczoraj ${time}`;
+  const [y, m, day] = d.foundAt.slice(0, 10).split("-");
+  return `${day}.${m} ${time}`;
+};
+
 
 /* ---------- KPI row ---------- */
 function kpis(rows) {
@@ -527,7 +590,7 @@ function scatter(rows) {
       tip.innerHTML =
         `<b>${d.street || d.district || "—"}</b>` +
         `<div class="row">${zl(d.price)} · ${mn(d.commute)}${d.area ? " · " + d.area + " m²" : ""}</div>` +
-        `<div class="row">${d.type.replace(/_/g, " ")} · ${d.source}</div>` +
+        `<div class="row">${typeLabel(d)} · ${d.source}</div>` +
         (d.flags ? `<div class="row flag">${d.flags}</div>` : "");
       tip.style.opacity = 1;
       const pad = 14;
@@ -544,10 +607,8 @@ const COLS = [
   { key: "price",    label: "Cena",      num: true,
     fmt: d => zl(d.price) + (d.priceCheck ? ` <span class="flag" title="${d.priceCheck}">⚠</span>` : "") },
   { key: "days",     label: "Dodane",    num: true,  fmt: age },
-  { key: "found",    label: "Znalezione", num: true,
-    fmt: d => d.found == null ? "—"
-      : `<span title="${d.foundAt}">${d.found <= 0 ? '<span class="fresh">dziś</span>'
-        : d.found === 1 ? "wczoraj" : d.found + " dni temu"}</span>` },
+  { key: "foundAt",  label: "Znalezione", num: true,
+    fmt: d => `<span title="${d.foundAt}">${foundLabel(d)}</span>` },
   { key: "commute",  label: "Dojazd MPK", num: true, fmt: d => mn(d.commute) },
   { key: "walkStops", label: "w tym pieszo", num: true, fmt: d => mn(d.walkStops) },
   { key: "bike",     label: "Rowerem",   num: true,
@@ -556,7 +617,7 @@ const COLS = [
     fmt: d => d.walkAll == null ? "—" : mn(d.walkAll) + (d.walkKm ? ` <span class="muted">(${d.walkKm} km)</span>` : "") },
   { key: "area",     label: "m²",        num: true,  fmt: d => d.area ?? "—" },
   { key: "ppm",      label: "zł/m²",     num: true,  fmt: d => d.ppm ? Math.round(d.ppm) : "—" },
-  { key: "type",     label: "Typ",       num: false, fmt: d => d.type.replace(/_/g, " ") },
+  { key: "type",     label: "Rodzaj",    num: false, fmt: typeLabel },
   { key: "street",   label: "Adres",     num: false, fmt: d => d.street || "—" },
   { key: "district", label: "Dzielnica", num: false, fmt: d => d.district || "—" },
   { key: "seller",   label: "Od kogo",   num: false,
