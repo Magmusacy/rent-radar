@@ -116,6 +116,24 @@ def seller_type(text: str) -> str:
     return ""
 
 
+def largest_amount_in_text(text: str):
+    """The biggest plausible rent-sized figure the listing mentions.
+
+    Most posts never write a total — they list components ("2000 odstępne,
+    czynsz 493, prąd 78"). The sum has to be at least as large as the largest
+    component, so anything below it means the model dropped or misread a number.
+    """
+    amounts = []
+    for m in re.finditer(r"(\d[\d  ]{2,7})\s*(?:zł|zl|pln)", text, re.IGNORECASE):
+        try:
+            v = int(re.sub(r"[  ]", "", m.group(1)))
+        except ValueError:
+            continue
+        if 400 <= v <= 15000:      # below: utilities; above: deposits, sale prices
+            amounts.append(v)
+    return max(amounts) if amounts else None
+
+
 def totals_in_text(text: str) -> set:
     found = set()
     for pat in TOTAL_PATTERNS:
@@ -185,10 +203,16 @@ def process(item, client, gmaps, target, index, geo_conn=None, destination=None)
     row["stated_totals"] = "; ".join(str(v) for v in sorted(stated))
     # keep the words the numbers came from, so any row can be audited without re-fetching
     row["source_excerpt"] = re.sub(r"\s+", " ", text)[:400]
+    biggest = largest_amount_in_text(text)
     if stated and isinstance(price, (int, float)) and price:
         if not any(abs(price - v) <= max(20, 0.02 * v) for v in stated):
             row["price_check"] = f"tekst podaje: {', '.join(str(v) for v in sorted(stated))}"
-            row["reject"] = "; ".join(filter(None, [row.get("reject"), "cena do weryfikacji"]))
+    elif isinstance(price, (int, float)) and price and biggest and price < 0.95 * biggest:
+        row["price_check"] = f"suma niższa niż największa kwota w ogłoszeniu ({biggest} zł)"
+    elif not price and biggest:
+        row["price_check"] = f"brak ceny mimo kwot w treści (największa: {biggest} zł)"
+    if row.get("price_check"):
+        row["reject"] = "; ".join(filter(None, [row.get("reject"), "cena do weryfikacji"]))
 
     reach = (f"commute={row.get('commute_min', '?')}" if gmaps
              else f"{row.get('distance_km', '?')} km")
