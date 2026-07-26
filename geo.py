@@ -36,6 +36,9 @@ MIN_INTERVAL_S = 1.1
 
 _throttle_lock = threading.Lock()
 _last_request = 0.0
+# score_offers runs eight workers against one connection; sqlite tolerates that
+# only if the calls are serialised.
+_db_lock = threading.Lock()
 
 Coords = Tuple[float, float]
 
@@ -69,7 +72,9 @@ def geocode(address: str, conn: Optional[sqlite3.Connection] = None,
         return None
 
     if conn is not None:
-        row = conn.execute("SELECT lat, lon FROM geocache WHERE query = ?", (query,)).fetchone()
+        with _db_lock:
+            row = conn.execute(
+                "SELECT lat, lon FROM geocache WHERE query = ?", (query,)).fetchone()
         if row is not None:
             lat, lon = row[0], row[1]
             return (lat, lon) if lat is not None else None
@@ -84,13 +89,14 @@ def geocode(address: str, conn: Optional[sqlite3.Connection] = None,
     coords = (float(hits[0]["lat"]), float(hits[0]["lon"])) if hits else None
     if conn is not None:
         # a miss is cached too, so a bad address is not retried on every scan
-        conn.execute(
-            "INSERT OR REPLACE INTO geocache (query, lat, lon, resolved, fetched_at)"
-            " VALUES (?, ?, ?, ?, datetime('now'))",
-            (query, coords[0] if coords else None, coords[1] if coords else None,
-             hits[0].get("display_name", "")[:200] if hits else ""),
-        )
-        conn.commit()
+        with _db_lock:
+            conn.execute(
+                "INSERT OR REPLACE INTO geocache (query, lat, lon, resolved, fetched_at)"
+                " VALUES (?, ?, ?, ?, datetime('now'))",
+                (query, coords[0] if coords else None, coords[1] if coords else None,
+                 hits[0].get("display_name", "")[:200] if hits else ""),
+            )
+            conn.commit()
     return coords
 
 
